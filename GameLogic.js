@@ -1,6 +1,6 @@
-const keyPresses = [];
+var keyPresses = [];
 const arrowKeys = ["ArrowDown", "ArrowUp", "ArrowLeft", "ArrowRight"];
-const snakeBody = [];
+var snakeBody = [];
 const snakeWidth = 30;
 const snakeHeight = 30;
 const leftEdge = 0;
@@ -10,9 +10,10 @@ const downEdge = 510;
 var CURRENTDIRECTION = "DOWN";
 const MOVEMENTINCREMENT = 30;
 const GAMESPEED = 500;
-const FOODARRAY = [];
-const FOOD = {X: 0, Y: 0};
-const SCORE = 0;
+var FOODARRAY = [];
+var FOOD = {X: 0, Y: 0};
+var SCORE = 0;
+var RESTART = false;
 
 document.addEventListener("keydown", (event) => {
 				if (arrowKeys.includes(event.key)) {
@@ -46,14 +47,17 @@ function getInput() {
 }
 
 async function gameBrain() {
+	var ctx;
+	SCORE = 0;
+	RESTART = false;
 	snakeBody.push({x: 30, y: 30});
 	const canvas = document.getElementById("snakeScreen");
 	if (canvas.getContext) {
-		const ctx = canvas.getContext("2d");
+		ctx = canvas.getContext("2d");
 		//ctx.fillRect(25, 25, 30, 30);
 		var i = 0;
 		let isGameEnd = false;
-		while (!checkSnakeSelfCollision()) {
+		while (!checkSnakeSelfCollision() && !RESTART) {
 			ctx.clearRect(0, 0, canvas.width, canvas.height);
 			ctx.beginPath();
 			if (touchesFood()) {
@@ -63,6 +67,7 @@ async function gameBrain() {
 				createFood();
 				//getInput();
 				growBody();
+				updateScore();
 			}
 			getInput();
 			moveSnake();
@@ -75,10 +80,18 @@ async function gameBrain() {
 			await new Promise(r => setTimeout(r, GAMESPEED));
 		}
 	}
+	ctx.clearRect(0, 0, canvas.width, canvas.height);
+	ctx.beginPath();
+	ctx.fillStyle = "red";
+	ctx.font = "48px serif";
+	ctx.fillText("GAME OVER", 150, 250);
+	//document.getElementById("startButton").disabled = false;
 }
 
 function updateScore() {
 	SCORE += 50;
+	//console.log("Score is " + SCORE);
+	document.getElementById("scoreLabel").innerHTML = 'SCORE: ' + SCORE;
 }
 
 function growBody() {
@@ -214,6 +227,18 @@ function initializeFoodCoordinates() {
 	}
 }
 //getInput();
-initializeFoodCoordinates();
-createFood();
-gameBrain();
+
+async function startGame() {
+	RESTART = true;
+	await new Promise(r => setTimeout(r, GAMESPEED + 10));
+	//document.getElementById("startButton").disabled = true;
+	keyPresses = [];
+	snakeBody = [];
+	CURRENTDIRECTION = "DOWN";
+	FOODARRAY = [];
+	FOOD = {X: 0, Y: 0};
+	SCORE = 0;
+	initializeFoodCoordinates();
+	createFood();
+	gameBrain();
+}
